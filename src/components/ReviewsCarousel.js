@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
-// Example 15 reviews
+// 15 example reviews
 const reviews = [
   { name: "Alice Johnson", role: "Logistics Manager", image: "/reviews/alice.jpg", text: "ShipTrack Global is seamless and incredibly fast." },
   { name: "Michael Smith", role: "E-commerce Owner", image: "/reviews/michael.jpg", text: "Reliable and accurate tracking." },
@@ -23,8 +23,9 @@ const reviews = [
 
 export default function ReviewsCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
 
-  // Slide automatically every 5 seconds
+  // Slide every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % reviews.length);
@@ -32,45 +33,59 @@ export default function ReviewsCarousel() {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-4xl font-bold mb-12">What Our Users Say</h2>
-        <div className="relative max-w-3xl mx-auto">
-          {reviews.map((review, index) => (
-            <div
-              key={index}
-              className={`transition-all duration-1000 ease-in-out transform ${
-                index === currentIndex ? "opacity-100 translate-x-0" : "opacity-0 absolute top-0 left-0 w-full"
-              } bg-white p-6 rounded-xl shadow-lg`}
-            >
-              <div className="flex items-center justify-center mb-4">
-                <img
-                  src={review.image}
-                  alt={review.name}
-                  className="w-16 h-16 rounded-full object-cover mr-4"
-                />
-                <div>
-                  <h3 className="text-lg font-semibold">{review.name}</h3>
-                  <p className="text-gray-500 text-sm">{review.role}</p>
-                </div>
-              </div>
-              <p className="text-gray-700 text-center text-lg">"{review.text}"</p>
-            </div>
-          ))}
-        </div>
+  // Scroll container when currentIndex changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-        {/* Navigation dots */}
-        <div className="flex justify-center mt-6 space-x-2">
-          {reviews.map((_, index) => (
-            <span
-              key={index}
-              className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                index === currentIndex ? "bg-orange-500" : "bg-gray-300"
-              }`}
-            ></span>
-          ))}
-        </div>
+    const cardWidth = container.firstChild.offsetWidth + 16; // 16px gap
+    const scrollX = cardWidth * currentIndex;
+
+    container.scrollTo({
+      left: scrollX,
+      behavior: "smooth",
+    });
+  }, [currentIndex]);
+
+  // Determine visible cards for desktop
+  const visibleCards = 3;
+
+  return (
+    <div className="relative max-w-7xl mx-auto px-4">
+      <div
+        className="flex overflow-x-hidden gap-4 scroll-smooth"
+        ref={containerRef}
+      >
+        {reviews.map((review, index) => (
+          <div
+            key={index}
+            className="min-w-full md:min-w-[calc(33.333%-1rem)] bg-white p-6 rounded-xl shadow-lg flex flex-col items-center md:items-start gap-4 transition-transform duration-500"
+          >
+            <img
+              src={review.image}
+              alt={review.name}
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover"
+            />
+            <div className="text-center md:text-left">
+              <h3 className="text-lg md:text-xl font-semibold">{review.name}</h3>
+              <p className="text-gray-500 text-sm md:text-base">{review.role}</p>
+              <p className="text-gray-700 text-sm md:text-lg mt-2 md:mt-4">"{review.text}"</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation dots */}
+      <div className="flex justify-center mt-6 space-x-2">
+        {reviews.map((_, index) => (
+          <span
+            key={index}
+            className={`w-3 h-3 md:w-4 md:h-4 rounded-full transition-colors duration-300 cursor-pointer ${
+              index === currentIndex ? "bg-orange-500" : "bg-gray-300"
+            }`}
+            onClick={() => setCurrentIndex(index)}
+          ></span>
+        ))}
       </div>
     </div>
   );
