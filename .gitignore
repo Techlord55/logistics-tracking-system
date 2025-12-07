@@ -44,9 +44,4 @@ node_modules/
 .env
 .DS_Store
 
-# Firebase config
-/src/lib/firebase.js
-/src/lib/firebaseAdmin.js
 
-# Supabase client
-/src/lib/supabaseClient.js
