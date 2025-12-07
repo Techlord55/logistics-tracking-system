@@ -2,21 +2,20 @@
 
 import { useState, useEffect } from "react";
 
-const TOTAL_SLIDES = 9;
-
-// Fallback local images
+const TOTAL_SLIDES = 12;
 const fallbackImages = Array.from({ length: TOTAL_SLIDES }, (_, i) => `/ships/${i + 1}.jpg`);
 
 export default function ShippingCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [images, setImages] = useState(fallbackImages);
+  const [loadedCount, setLoadedCount] = useState(0);
 
-  // Fetch images from Pexels API
+  // Fetch images from Pexels and lazy-load
   useEffect(() => {
     async function fetchImages() {
       try {
         const res = await fetch(
-          "https://api.pexels.com/v1/search?query=ship&per_page=8",
+          "https://api.pexels.com/v1/search?query=ship&per_page=12",
           {
             headers: {
               Authorization: process.env.NEXT_PUBLIC_PEXELS_API_KEY,
@@ -27,11 +26,28 @@ export default function ShippingCarousel() {
 
         const data = await res.json();
         if (data.photos && data.photos.length > 0) {
-          setImages(data.photos.map((photo) => photo.src.landscape));
+          const pexelsImages = data.photos.map((photo) => photo.src.landscape);
+
+          // Lazy-load images one by one
+          pexelsImages.forEach((src, idx) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+              setImages((prev) => {
+                const newArr = [...prev];
+                newArr[idx] = src;
+                return newArr;
+              });
+              setLoadedCount((prev) => prev + 1);
+            };
+            img.onerror = () => {
+              // keep fallback if failed
+              setLoadedCount((prev) => prev + 1);
+            };
+          });
         }
       } catch (err) {
         console.error("Pexels API failed, using fallback images:", err);
-        setImages(fallbackImages);
       }
     }
 
@@ -43,7 +59,6 @@ export default function ShippingCarousel() {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % TOTAL_SLIDES);
     }, 5000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -61,7 +76,6 @@ export default function ShippingCarousel() {
             alt={`Shipping ${idx + 1}`}
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Fallback to local image if online image fails
               e.target.src = fallbackImages[idx];
             }}
           />
