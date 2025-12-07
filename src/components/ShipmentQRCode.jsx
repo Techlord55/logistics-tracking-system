@@ -1,0 +1,22 @@
+'use client'
+
+import { QRCodeCanvas } from 'qrcode.react'
+
+export default function ShipmentQRCode({ code }) {
+  const url = `https://hiptrack-global.vercel.app/track/${code}`
+
+  return (
+    <div className="text-center my-6">
+      {/* QR code linking directly to shipment details */}
+      <QRCodeCanvas
+        value={url}          // QR code contains the full tracking URL
+        size={160}           
+        bgColor="#ffffff"
+        fgColor="#000000"
+        level="H"
+        includeMargin={true}
+      />
+      <div className="mt-2 text-gray-700 font-semibold">{code}-CARGO</div>
+    </div>
+  )
+}

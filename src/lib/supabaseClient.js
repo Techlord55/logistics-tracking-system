@@ -1,15 +1,28 @@
+// src/lib/supabaseClient.js
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseKey || !supabaseServiceRoleKey) {
-  throw new Error("❌ Missing Supabase env variables")
+if (!supabaseUrl) {
+  throw new Error("❌ Missing NEXT_PUBLIC_SUPABASE_URL")
 }
 
-// Public client (frontend-safe)
-export const supabase = createClient(supabaseUrl, supabaseKey)
+if (!supabasePublishableKey) {
+  throw new Error("❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY (Publishable key)")
+}
 
-// Admin client (service role, can bypass RLS)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey)
+// Public client (frontend-safe) - uses publishable key
+export const supabase = createClient(supabaseUrl, supabasePublishableKey)
+
+// Admin client (service role, can bypass RLS) - only for server-side
+// This will be undefined in client-side code, which is fine
+export const supabaseAdmin = supabaseSecretKey 
+  ? createClient(supabaseUrl, supabaseSecretKey)
+  : null
+
+// Log warning if admin client is not available (only in development)
+if (process.env.NODE_ENV === 'development' && !supabaseAdmin) {
+  console.warn("⚠️ SUPABASE_SERVICE_ROLE_KEY not found - Admin operations will not work")
+}

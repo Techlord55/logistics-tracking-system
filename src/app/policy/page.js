@@ -1,55 +1,139 @@
-'use client'
+"use client";
+
+import Link from "next/link";
+import ChatWidget from "@/components/ChatWidget";
+import { Shield, FileText, Lock, Globe, Mail } from "lucide-react";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto bg-white p-10 rounded-xl shadow-lg">
-        <h1 className="text-4xl font-bold mb-6">Privacy Policy</h1>
-        <p className="text-gray-700 mb-4">Effective Date: [Insert Date]</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center space-x-2">
+            <Shield className="w-8 h-8 text-purple-600" />
+            <div className="flex items-center">
+              <span className="text-3xl font-extrabold text-purple-600">ShipTrack</span>
+              <span className="text-3xl font-extrabold text-orange-500">Global</span>
+            </div>
+          </Link>
+          <Link
+            href="/"
+            className="text-gray-600 hover:text-purple-600 font-medium transition"
+          >
+            Back to Home
+          </Link>
+        </div>
+      </header>
 
-        <p className="mb-4">
-          Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal information when you use our website or services.
-        </p>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">1. Information We Collect</h2>
-        <ul className="list-disc ml-6 mb-4 text-gray-700">
-          <li>Personal information you provide (e.g., name, email, phone).</li>
-          <li>Information about your usage of our website (pages visited, interactions).</li>
-          <li>Device and browser information for security and analytics purposes.</li>
-        </ul>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">2. How We Use Your Information</h2>
-        <ul className="list-disc ml-6 mb-4 text-gray-700">
-          <li>To provide and improve our services.</li>
-          <li>To communicate with you regarding updates, offers, or account matters.</li>
-          <li>For security, fraud prevention, and legal compliance.</li>
-        </ul>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">3. Data Sharing</h2>
-        <p className="text-gray-700 mb-4">
-          We do not sell your personal information. We may share data with trusted service providers and comply with legal requests.
-        </p>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">4. Cookies and Tracking</h2>
-        <p className="text-gray-700 mb-4">
-          Our site may use cookies and analytics tools. You can manage cookies through your browser settings.
-        </p>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">5. Data Security</h2>
-        <p className="text-gray-700 mb-4">
-          We implement technical and administrative measures to protect your information. However, no system is completely secure; use our site at your own risk.
-        </p>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">6. Your Rights</h2>
-        <p className="text-gray-700 mb-4">
-          You can access, update, or request deletion of your personal data and opt-out of marketing communications.
-        </p>
-
-        <h2 className="text-2xl font-semibold mt-6 mb-2">7. Contact Us</h2>
-        <p className="text-gray-700">
-          Questions? Email us at <a href="mailto:support@shiptrackglobal.com" className="text-blue-600 hover:underline">support@shiptrackglobal.com</a>.
-        </p>
+      {/* Hero */}
+      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <Lock className="w-16 h-16 mx-auto mb-4" />
+          <h1 className="text-5xl font-extrabold mb-4">Privacy Policy</h1>
+          <p className="text-xl opacity-90">Your privacy and data protection matter to us.</p>
+          <p className="text-sm mt-4 opacity-75">Last Updated: December 2024</p>
+        </div>
       </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto bg-white p-10 rounded-2xl shadow-lg border border-gray-100">
+
+          {/* Section 1 */}
+          <div className="mb-10">
+            <div className="flex items-center mb-4">
+              <FileText className="w-8 h-8 text-purple-600 mr-3" />
+              <h2 className="text-2xl font-bold text-gray-900">1. Information We Collect</h2>
+            </div>
+            <ul className="space-y-2 text-gray-700 bg-purple-50 p-6 rounded-xl border-l-4 border-purple-600">
+              <li>• Personal details (name, email, phone)</li>
+              <li>• Website usage analytics</li>
+              <li>• Device, IP address & browser information</li>
+            </ul>
+          </div>
+
+          {/* Section 2 */}
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">2. How We Use Your Data</h2>
+            <p className="text-gray-700 mb-4">
+              We use your information to:
+            </p>
+            <ul className="space-y-2 text-gray-700 ml-6">
+              <li>→ Provide and improve services</li>
+              <li>→ Communicate updates and support notifications</li>
+              <li>→ Protect our platform from fraud and abuse</li>
+            </ul>
+          </div>
+
+          {/* Section 3 */}
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">3. Sharing of Data</h2>
+            <p className="text-gray-700 bg-yellow-50 p-6 rounded-xl border-l-4 border-yellow-400">
+              We do not sell your data. Limited sharing occurs only with trusted service providers and when required by law.
+            </p>
+          </div>
+
+          {/* Section 4 */}
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">4. Cookies & Tracking</h2>
+            <p className="text-gray-700">
+              Cookies help us understand how you use our site. You may disable them in your browser settings.
+            </p>
+          </div>
+
+          {/* Section 5 */}
+          <div className="mb-10">
+            <Globe className="w-8 h-8 text-orange-500 mb-3" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">5. Data Security</h2>
+            <p className="text-gray-700">
+              Industry-grade protections safeguard your information, but no system is 100% breach-proof.
+            </p>
+          </div>
+
+          {/* Section 6 */}
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">6. Your Data Rights</h2>
+            <ul className="space-y-2 text-gray-700 ml-6">
+              <li>✔ Request access or deletion of your data</li>
+              <li>✔ Update your account information</li>
+              <li>✔ Opt-out of marketing emails anytime</li>
+            </ul>
+          </div>
+
+          {/* Section 7 */}
+          <div className="bg-gradient-to-r from-purple-100 to-orange-100 p-8 rounded-xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">7. Contact Us</h2>
+            <p className="text-gray-700 mb-2">If you have any privacy questions:</p>
+            <p className="text-gray-900">
+              <strong>Email:</strong>{" "}
+              <a href="mailto:support@shiptrackglobal.com" className="text-purple-600 hover:underline">
+                support@shiptrackglobal.com
+              </a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <ChatWidget />
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-gray-400">
+            &copy; {new Date().getFullYear()} ShipTrack Global. All Rights Reserved.
+          </p>
+          <div className="flex justify-center gap-6 mt-4 text-sm">
+            <Link href="/terms" className="text-gray-400 hover:text-white transition">
+              Terms of Service
+            </Link>
+            <Link href="/support" className="text-gray-400 hover:text-white transition">
+              Support
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
-  )
+  );
 }

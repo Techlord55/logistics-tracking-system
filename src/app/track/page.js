@@ -1,6 +1,8 @@
+// src/app/track/page.jsx
 "use client"
 import { useState } from "react"
 import ShipmentDetails from "@/components/ShipmentDetails"
+import ChatWidget from "@/components/ChatWidget";
 
 export default function Track() {
   const [code, setCode] = useState("")
@@ -53,6 +55,7 @@ export default function Track() {
               onKeyPress={(e) => e.key === "Enter" && handleTrack()}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <ChatWidget />
             <button
               onClick={handleTrack}
               disabled={loading}
@@ -64,7 +67,7 @@ export default function Track() {
           {error && <p className="text-red-500 mt-4 text-center md:text-left">{error}</p>}
         </div>
 
-        {shipment && <ShipmentDetails shipment={shipment} />}
+        {shipment && <ShipmentDetails initialShipment={shipment} />}
       </div>
     </div>
   )

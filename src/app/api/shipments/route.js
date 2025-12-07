@@ -1,64 +1,89 @@
+// src/app/api/shipments/route.js
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseClient'
 
-// Helper to safely parse floats
-const safeParseFloat = (val) => (val === null || val === undefined || val === '' ? null : parseFloat(val))
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const data = await request.json()
+    const data = await req.json()
 
-    const {
-      name,
-      location,
-      products,
-      agency,
-      origin_lat,
-      origin_lng,
-      dest_lat,
-      dest_lng,
-      estimated_hours,
-    } = data
-
-    // Generate unique shipment code
     const code = 'SHP' + Math.random().toString(36).substring(2, 8).toUpperCase()
 
-    // Create shipment record
-    const shipmentData = {
-      code,
-      name,
-      location,
-      products,
-      agency,
-      current_lat: safeParseFloat(origin_lat), // used as starting point only
-      current_lng: safeParseFloat(origin_lng), // used as starting point only
-      dest_lat: safeParseFloat(dest_lat),
-      dest_lng: safeParseFloat(dest_lng),
-      estimated_hours: parseInt(estimated_hours, 10) || null,
-      progress: 0, // start at 0
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
+    // Ensure products is always an array with proper default fields
+    const products = Array.isArray(data.products)
+      ? data.products.map((p) => ({
+          piece_type: p.piece_type || '',
+          description: p.description || '',
+          qty: p.qty ?? 1,
+          length_cm: p.length_cm ?? 0,
+          width_cm: p.width_cm ?? 0,
+          height_cm: p.height_cm ?? 0,
+          weight_kg: p.weight_kg ?? 0,
+        }))
+      : []
 
-    const { error } = await supabase.from('shipments').insert([shipmentData])
+  
+
+const payload = {
+  code,
+  name: data.name || '',
+  agency: data.agency || '',
+  
+  // Products/Package details are now stored in the JSONB 'products' column
+  products, 
+
+  // Shipper/Receiver
+  shipper_name: data.shipper_name || '',
+  shipper_address: data.shipper_address || '',
+  receiver_name: data.receiver_name || '',
+  receiver_address: data.receiver_address || '',
+  
+  // ADDED PHONE NUMBERS HERE!
+  shipper_phone: data.shipper_phone || null,
+  receiver_phone: data.receiver_phone || null,
+// 🔑 CRITICAL FIX: Add receiver_email here!
+  receiver_email: data.receiver_email || null,
+  // Location/Time/Status
+  admin_comment: data.admin_comment || null,
+  current_lat: data.origin_lat ? parseFloat(data.origin_lat) : null,
+  current_lng: data.origin_lng ? parseFloat(data.origin_lng) : null,
+  dest_lat: data.dest_lat ? parseFloat(data.dest_lat) : null,
+  dest_lng: data.dest_lng ? parseFloat(data.dest_lng) : null,
+  estimated_hours: data.estimated_hours ? parseInt(data.estimated_hours, 10) : null,
+  progress: 0,
+  status: data.status || 'On Hold',
+  
+  // Transaction Details
+  shipment_type: data.shipment_type || 'Truckload',
+  shipment_mode: data.shipment_mode || 'Land Shipping',
+  payment_mode: data.payment_mode || 'CASH',
+  carrier_ref: data.carrier_ref || `LOG${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+  
+  // Timestamps
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+}
+
+    const { error } = await supabaseAdmin.from('shipments').insert([payload])
     if (error) throw error
 
     return NextResponse.json({ code, message: 'Shipment created successfully' })
   } catch (err) {
-    console.error('Error creating shipment:', err)
+    console.error('Create shipment error:', err)
     return NextResponse.json({ error: 'Failed to create shipment' }, { status: 500 })
   }
 }
-export async function GET() {
-  const { data: shipments, error } = await supabase
-    .from('shipments')
-    .select('*')
-    .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Supabase error:', error)
+export async function GET() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('shipments')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return NextResponse.json(data)
+  } catch (err) {
+    console.error('Fetch shipments error:', err)
     return NextResponse.json({ error: 'Failed to fetch shipments' }, { status: 500 })
   }
-
-  return NextResponse.json(shipments)
 }

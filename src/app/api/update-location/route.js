@@ -1,23 +1,23 @@
+// src/app/api/update-location/route.js
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseClient'
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const { code, lat, lng } = await request.json()
-
-    const { data, error } = await supabase
+    const { code, lat, lng } = await req.json()
+    const { data, error } = await supabaseAdmin
       .from('shipments')
-      .update({ current_lat: lat, current_lng: lng, updated_at: new Date().toISOString() })
-      .eq('code', code)
+      .update({
+        current_lat: lat,
+        current_lng: lng,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('code', code.toUpperCase())
 
     if (error) throw error
-    if (!data || data.length === 0) {
-      return NextResponse.json({ error: 'Shipment not found' }, { status: 404 })
-    }
-
-    return NextResponse.json({ success: true, message: 'Location updated successfully' })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('Error updating location:', err)
+    console.error('Update location error:', err)
     return NextResponse.json({ error: 'Failed to update location' }, { status: 500 })
   }
 }
