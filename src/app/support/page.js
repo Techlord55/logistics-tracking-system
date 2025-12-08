@@ -122,7 +122,8 @@ export default function Support() {
             Help us improve our services by sharing your experience. Your feedback matters to us and helps us serve you better.
           </p>
           <a
-            href="mailto:support@shiptrackglobal.com?subject=Feedback"
+          href="/feedbacks"
+            // href="mailto:support@shiptrackglobal.com?subject=Feedback"
             className="inline-block px-8 py-3 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 transition shadow-lg"
           >
             Submit Feedback

@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 import { cities } from "@/lib/cities";
+import { 
+  Package, 
+  User, 
+  MapPin, 
+  Clock, 
+  CreditCard,
+  Plus,
+  X,
+  Truck
+} from "lucide-react";
 
 export default function AdminForm({ onSuccess }) {
   const [form, setForm] = useState({
@@ -22,6 +32,8 @@ export default function AdminForm({ onSuccess }) {
     carrier_ref: generateCarrierRef(),
     payment_mode: "CASH",
     admin_comment: "",
+    status: "In Transit",
+    location:""
   });
 
   const [products, setProducts] = useState([
@@ -69,6 +81,8 @@ export default function AdminForm({ onSuccess }) {
       products,
       origin_lat: origin.lat,
       origin_lng: origin.lng,
+      current_lat: origin.lat,
+      current_lng: origin.lng,
       dest_lat: dest.lat,
       dest_lng: dest.lng,
     };
@@ -102,111 +116,433 @@ export default function AdminForm({ onSuccess }) {
       shipment_mode: "Land Shipping",
       carrier_ref: generateCarrierRef(),
       payment_mode: "CASH",
-       admin_comment: "",
+      admin_comment: "",
+      status: "In Transit",
     });
     setProducts([{ piece_type: "", description: "", qty: 1, length_cm: 0, width_cm: 0, height_cm: 0, weight_kg: 0 }]);
 
     onSuccess?.();
   };
 
+  const statusColors = {
+    "On Hold": "bg-yellow-100 text-yellow-700 border-yellow-300",
+    "In Transit": "bg-blue-100 text-blue-700 border-blue-300",
+    "Delivered": "bg-green-100 text-green-700 border-green-300",
+    "Cancelled": "bg-red-100 text-red-700 border-red-300",
+  };
+
+  const inputClass = "w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200";
+  const labelClass = "block text-sm font-semibold text-gray-700 mb-2";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-
-      {/* Shipment Details */}
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Shipment Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="input" name="name" placeholder="Shipment Name" value={form.name} onChange={handleChange} required />
-          <input className="input" name="agency" placeholder="Agency" value={form.agency} onChange={handleChange} required />
-          <select className="input" name="originCity" value={form.originCity} onChange={handleChange} required>
-            <option value="">Select Origin City</option>
-            {cities.map((c) => (
-              <option key={c.name} value={c.name}>{c.name}, {c.country}</option>
-            ))}
-          </select>
-          <select className="input" name="destCity" value={form.destCity} onChange={handleChange} required>
-            <option value="">Select Destination City</option>
-            {cities.map((c) => (
-              <option key={c.name} value={c.name}>{c.name}, {c.country}</option>
-            ))}
-          </select>
-          <input type="number" className="input" name="estimated_hours" placeholder="Estimated Hours" value={form.estimated_hours} onChange={handleChange} required />
-          <select className="input" name="shipment_type" value={form.shipment_type} onChange={handleChange} required>
-            <option>Truckload</option>
-            <option>Less than Truckload (LTL)</option>
-            <option>Air Freight</option>
-            <option>Ocean Freight</option>
-          </select>
-          <select className="input" name="shipment_mode" value={form.shipment_mode} onChange={handleChange} required>
-            <option>Land Shipping</option>
-            <option>Air Shipping</option>
-            <option>Sea Shipping</option>
-          </select>
-          <input className="input bg-gray-100" name="carrier_ref" value={form.carrier_ref} readOnly />
-          <select className="input" name="payment_mode" value={form.payment_mode} onChange={handleChange} required>
-            <option>CASH</option>
-            <option>CREDIT</option>
-            <option>DEBIT</option>
-            <option>ONLINE</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Shipper Info */}
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Shipper Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="input" name="shipper_name" placeholder="Shipper Name" value={form.shipper_name} onChange={handleChange} required />
-          <input className="input" name="shipper_phone" placeholder="Shipper Phone" value={form.shipper_phone} onChange={handleChange} required />
-          <textarea className="input col-span-2" name="shipper_address" placeholder="Shipper Address" value={form.shipper_address} onChange={handleChange} required />
-        </div>
-      </div>
-
-      {/* Receiver Info */}
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Receiver Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="input" name="receiver_name" placeholder="Receiver Name" value={form.receiver_name} onChange={handleChange} required />
-          <input className="input" name="receiver_phone" placeholder="Receiver Phone" value={form.receiver_phone} onChange={handleChange} required />
-          <input type="email" className="input" name="receiver_email" placeholder="Receiver Email" value={form.receiver_email} onChange={handleChange} required /> {/* <--- 🔑 ADDED: Input Field */}
-          <div className="col-span-1 hidden md:block"></div> {/* Spacer for grid alignment */}
-          <textarea className="input col-span-2" name="receiver_address" placeholder="Receiver Address" value={form.receiver_address} onChange={handleChange} required />
-        </div>
-      </div>
-
-      {/* Products */}
-      <div>
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">Products</h3>
-          <button type="button" onClick={addProduct} className="text-blue-600 font-medium">+ Add Product</button>
-        </div>
-
-        {products.map((p, idx) => (
-          <div key={idx} className="grid grid-cols-8 gap-4 mt-3">
-            <input className="input" placeholder="Piece Type" value={p.piece_type} onChange={(e) => handleProductChange(idx, "piece_type", e.target.value)} required />
-            <input className="input" placeholder="Description" value={p.description} onChange={(e) => handleProductChange(idx, "description", e.target.value)} required />
-            <input type="number" className="input" placeholder="Qty" value={p.qty} onChange={(e) => handleProductChange(idx, "qty", e.target.value)} required />
-            <input type="number" className="input" placeholder="Length (cm)" value={p.length_cm} onChange={(e) => handleProductChange(idx, "length_cm", e.target.value)} required />
-            <input type="number" className="input" placeholder="Width (cm)" value={p.width_cm} onChange={(e) => handleProductChange(idx, "width_cm", e.target.value)} required />
-            <input type="number" className="input" placeholder="Height (cm)" value={p.height_cm} onChange={(e) => handleProductChange(idx, "height_cm", e.target.value)} required />
-            <input type="number" className="input" placeholder="Weight (kg)" value={p.weight_kg} onChange={(e) => handleProductChange(idx, "weight_kg", e.target.value)} required />
-            {products.length > 1 && <button type="button" onClick={() => removeProduct(idx)} className="text-red-600">Remove</button>}
+    <form onSubmit={handleSubmit} className="space-y-8">
+      
+      {/* Shipment Details Section */}
+      <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-purple-500 p-2 rounded-lg">
+            <Package className="w-5 h-5 text-white" />
           </div>
-        ))}
+          <h3 className="text-xl font-bold text-gray-900">Shipment Details</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Shipment Name *</label>
+            <input 
+              className={inputClass} 
+              name="name" 
+              placeholder="e.g., Electronics Batch #123" 
+              value={form.name} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Agency *</label>
+            <input 
+              className={inputClass} 
+              name="agency" 
+              placeholder="e.g., FedEx, DHL, UPS" 
+              value={form.agency} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Origin City *
+            </label>
+            <select className={inputClass} name="originCity" value={form.originCity} onChange={handleChange} required>
+              <option value="">Select Origin City</option>
+              {cities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}, {c.country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Destination City *
+            </label>
+            <select className={inputClass} name="destCity" value={form.destCity} onChange={handleChange} required>
+              <option value="">Select Destination City</option>
+              {cities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}, {c.country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <Clock className="w-4 h-4 inline mr-1" />
+              Estimated Hours *
+            </label>
+            <input 
+              type="number" 
+              className={inputClass} 
+              name="estimated_hours" 
+              placeholder="e.g., 48" 
+              value={form.estimated_hours} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Shipment Type *</label>
+            <select className={inputClass} name="shipment_type" value={form.shipment_type} onChange={handleChange} required>
+              <option>Truckload</option>
+              <option>Less than Truckload (LTL)</option>
+              <option>Air Freight</option>
+              <option>Ocean Freight</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <Truck className="w-4 h-4 inline mr-1" />
+              Shipment Mode *
+            </label>
+            <select className={inputClass} name="shipment_mode" value={form.shipment_mode} onChange={handleChange} required>
+              <option>Land Shipping</option>
+              <option>Air Shipping</option>
+              <option>Sea Shipping</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <CreditCard className="w-4 h-4 inline mr-1" />
+              Payment Mode *
+            </label>
+            <select className={inputClass} name="payment_mode" value={form.payment_mode} onChange={handleChange} required>
+              <option>CASH</option>
+              <option>CREDIT</option>
+              <option>DEBIT</option>
+              <option>ONLINE</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>Carrier Reference No.</label>
+            <input 
+              className={`${inputClass} bg-gray-100`} 
+              name="carrier_ref" 
+              value={form.carrier_ref} 
+              readOnly 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Initial Status *</label>
+            <div className="flex gap-3 items-center">
+              <select 
+                className={`flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500`} 
+                name="status" 
+                value={form.status} 
+                onChange={handleChange} 
+                required
+              >
+                <option value="On Hold">On Hold</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Delivered">Delivered</option>
+              </select>
+              <span className={`px-4 py-2 rounded-lg text-sm font-semibold border ${statusColors[form.status]}`}>
+                {form.status}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-{/* Admin Comment (Optional on Creation) */}
-<div>
-  <h3 className="text-xl font-semibold mb-2">Admin Notes (Optional)</h3>
-  <textarea
-    className="input w-full" 
-    name="admin_comment" 
-    placeholder="Internal notes or special instructions for the shipment..." 
-    value={form.admin_comment} 
-    onChange={handleChange} 
-    rows="3"
-  />
-</div>
-      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full">Create Shipment</button>
+
+      {/* Shipper Information */}
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-blue-500 p-2 rounded-lg">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">Shipper Information</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Shipper Name *</label>
+            <input 
+              className={inputClass} 
+              name="shipper_name" 
+              placeholder="Full name" 
+              value={form.shipper_name} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Shipper Phone *</label>
+            <input 
+              className={inputClass} 
+              name="shipper_phone" 
+              placeholder="+1 234 567 8900" 
+              value={form.shipper_phone} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Shipper Address *</label>
+            <textarea 
+              className={inputClass} 
+              name="shipper_address" 
+              placeholder="Full address with city, state, zip" 
+              value={form.shipper_address} 
+              onChange={handleChange} 
+              required 
+              rows="2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Receiver Information */}
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-xl border border-orange-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-orange-500 p-2 rounded-lg">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">Receiver Information</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Receiver Name *</label>
+            <input 
+              className={inputClass} 
+              name="receiver_name" 
+              placeholder="Full name" 
+              value={form.receiver_name} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Receiver Phone *</label>
+            <input 
+              className={inputClass} 
+              name="receiver_phone" 
+              placeholder="+1 234 567 8900" 
+              value={form.receiver_phone} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Receiver Email *</label>
+            <input 
+              type="email" 
+              className={inputClass} 
+              name="receiver_email" 
+              placeholder="email@example.com" 
+              value={form.receiver_email} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Receiver Address *</label>
+            <textarea 
+              className={inputClass} 
+              name="receiver_address" 
+              placeholder="Full address with city, state, zip" 
+              value={form.receiver_address} 
+              onChange={handleChange} 
+              required 
+              rows="2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Products Section */}
+      <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-green-500 p-2 rounded-lg">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Products</h3>
+          </div>
+          <button 
+            type="button" 
+            onClick={addProduct} 
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {products.map((p, idx) => (
+            <div key={idx} className="bg-white p-5 rounded-xl border-2 border-green-200 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-semibold text-gray-700">Product #{idx + 1}</span>
+                {products.length > 1 && (
+                  <button 
+                    type="button" 
+                    onClick={() => removeProduct(idx)} 
+                    className="text-red-600 hover:text-red-700 font-medium flex items-center gap-1"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Piece Type *</label>
+                  <input 
+                    className={inputClass} 
+                    placeholder="Box, Pallet, etc." 
+                    value={p.piece_type} 
+                    onChange={(e) => handleProductChange(idx, "piece_type", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Description *</label>
+                  <input 
+                    className={inputClass} 
+                    placeholder="Product details" 
+                    value={p.description} 
+                    onChange={(e) => handleProductChange(idx, "description", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Quantity *</label>
+                  <input 
+                    type="number" 
+                    className={inputClass} 
+                    placeholder="Qty" 
+                    value={p.qty} 
+                    onChange={(e) => handleProductChange(idx, "qty", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Weight (kg) *</label>
+                  <input 
+                    type="number" 
+                    className={inputClass} 
+                    placeholder="kg" 
+                    value={p.weight_kg} 
+                    onChange={(e) => handleProductChange(idx, "weight_kg", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Length (cm) *</label>
+                  <input 
+                    type="number" 
+                    className={inputClass} 
+                    placeholder="cm" 
+                    value={p.length_cm} 
+                    onChange={(e) => handleProductChange(idx, "length_cm", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Width (cm) *</label>
+                  <input 
+                    type="number" 
+                    className={inputClass} 
+                    placeholder="cm" 
+                    value={p.width_cm} 
+                    onChange={(e) => handleProductChange(idx, "width_cm", e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Height (cm) *</label>
+                  <input 
+                    type="number" 
+                    className={inputClass} 
+                    placeholder="cm" 
+                    value={p.height_cm} 
+                    onChange={(e) => handleProductChange(idx, "height_cm", e.target.value)} 
+                    required 
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Admin Notes */}
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Admin Notes (Optional)</h3>
+        <textarea 
+          className={inputClass} 
+          name="admin_comment" 
+          placeholder="Internal notes, special instructions, etc..." 
+          value={form.admin_comment} 
+          onChange={handleChange} 
+          rows="3"
+        />
+        <p className="text-sm text-gray-500 mt-2">These notes are for internal use and won't be sent to customers initially.</p>
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end">
+        <button 
+          type="submit" 
+          className="bg-gradient-to-r from-purple-600 to-orange-500 text-white px-8 py-4 rounded-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 font-bold text-lg flex items-center gap-2"
+        >
+          <Package className="w-5 h-5" />
+          Create Shipment
+        </button>
+      </div>
     </form>
   );
 }

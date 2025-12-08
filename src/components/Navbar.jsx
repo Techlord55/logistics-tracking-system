@@ -8,7 +8,7 @@ const NavLink = ({ href, children, onClick }) => (
   <Link
     href={href}
     onClick={onClick}
-    className="block md:inline-block text-gray-700 hover:text-purple-600 transition duration-200 py-2 md:py-0 font-medium"
+    className="block md:inline-block text-gray-700 hover:text-purple-600 transition-colors duration-300 py-2 md:py-0 font-medium"
   >
     {children}
   </Link>
@@ -24,10 +24,10 @@ const DropdownMenu = ({ title, items }) => {
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      <button className="flex items-center gap-1 text-gray-700 hover:text-purple-600 transition duration-200 font-medium">
+      <button className="flex items-center gap-1 text-gray-700 hover:text-purple-600 transition-colors duration-300 font-medium">
         {title}
         <svg
-          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -37,12 +37,12 @@ const DropdownMenu = ({ title, items }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+        <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-3 z-50">
           {items.map((item, idx) => (
             <Link
               key={idx}
               href={item.href}
-              className="block px-4 py-3 hover:bg-purple-50 transition duration-150"
+              className="block px-4 py-3 hover:bg-purple-50 hover:backdrop-blur-sm transition duration-200 rounded-lg"
             >
               <div className="font-semibold text-gray-800">{item.title}</div>
               {item.description && (
@@ -60,50 +60,32 @@ export default function Navbar({ showFullNav = true }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const servicesItems = [
-    {
-      title: "Express Shipping",
-      description: "Fast delivery for urgent shipments",
-      href: "/services/express",
-    },
-    {
-      title: "Freight Services",
-      description: "Large volume shipping solutions",
-      href: "/services/freight",
-    },
-    {
-      title: "International Shipping",
-      description: "Global delivery network",
-      href: "/services/international",
-    },
-    {
-      title: "Supply Chain Solutions",
-      description: "End-to-end logistics management",
-      href: "/services/supply-chain",
-    },
+    { title: "Express Shipping", description: "Fast delivery for urgent shipments", href: "/services/express" },
+    { title: "Freight Services", description: "Large volume shipping solutions", href: "/services/freight" },
+    { title: "International Shipping", description: "Global delivery network", href: "/services/international" },
+    { title: "Supply Chain Solutions", description: "End-to-end logistics management", href: "/services/supply-chain" },
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
+    <header className="sticky top-0 z-50 bg-white shadow-md border-b border-gray-100 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
-       {/* Logo */}
-<Link href="/" className="flex items-center group">
-  <img
-    src="/logo/logo.png"
-    alt="ShipTrack Global Logo"
-    className="h-30 md:h-36 w-auto drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
-    style={{ background: "transparent" }}
-    onError={(e) => {
-      const extensions = ["jpg", "jpeg", "svg", "webp"];
-      const currentExt = e.target.src.split(".").pop();
-      const nextExtIdx = extensions.indexOf(currentExt) + 1;
-      if (nextExtIdx < extensions.length) {
-        e.target.src = `/logo/logo.${extensions[nextExtIdx]}`;
-      }
-    }}
-  />
-</Link>
-
+        <Link href="/" className="flex items-center group">
+          <img
+            src="/logo/logo.png"
+            alt="ShipTrack Global Logo"
+            className="h-12 md:h-14 w-auto drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+            style={{ background: "transparent" }}
+            onError={(e) => {
+              const extensions = ["jpg", "jpeg", "svg", "webp"];
+              const currentExt = e.target.src.split(".").pop();
+              const nextExtIdx = extensions.indexOf(currentExt) + 1;
+              if (nextExtIdx < extensions.length) {
+                e.target.src = `/logo/logo.${extensions[nextExtIdx]}`;
+              }
+            }}
+          />
+        </Link>
 
         {/* Desktop Navigation */}
         {showFullNav ? (
@@ -130,10 +112,7 @@ export default function Navbar({ showFullNav = true }) {
             </button>
           </>
         ) : (
-          <Link
-            href="/"
-            className="text-gray-600 hover:text-purple-600 font-medium transition"
-          >
+          <Link href="/" className="text-gray-600 hover:text-purple-600 font-medium transition-colors duration-300">
             Back to Home
           </Link>
         )}
@@ -141,13 +120,13 @@ export default function Navbar({ showFullNav = true }) {
 
       {/* Mobile Navigation */}
       {showFullNav && mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3 shadow-lg">
           <div className="font-semibold text-gray-900 mb-2">Services</div>
           {servicesItems.map((item, idx) => (
             <Link
               key={idx}
               href={item.href}
-              className="block pl-4 py-2 text-gray-600 hover:text-purple-600"
+              className="block pl-4 py-2 text-gray-600 hover:text-purple-600 transition-colors duration-300"
               onClick={() => setMobileMenuOpen(false)}
             >
               {item.title}

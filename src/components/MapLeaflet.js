@@ -259,7 +259,7 @@ export default function MapLeaflet({ lat, lng, originLat, originLng, destLat, de
     }
 
     // animate smoothly
-    animateMarker(marker, from, to, 1800)
+    animateMarker(marker, from, to, 8000)
 
     // update polyline full path
     if (routeRef.current) routeRef.current.setLatLngs([[startLat, startLng], ...waypointsRef.current])

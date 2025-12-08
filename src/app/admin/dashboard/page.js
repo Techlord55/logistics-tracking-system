@@ -7,19 +7,29 @@ import AdminForm from "@/components/AdminForm";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import ChatWidget from "@/components/ChatWidget";
-
-
+import { 
+  Package, 
+  LogOut, 
+  MessageSquare, 
+  Plus, 
+  Edit3, 
+  Truck,
+  MapPin,
+  ChevronDown,
+  ChevronUp,
+  Mail
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null); // Toast state
-const [commentInputs, setCommentInputs] = useState({});
-const [feedbacks, setFeedbacks] = useState([]);
-const [feedbacksVisible, setFeedbacksVisible] = useState(false);
-const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
-
+  const [toast, setToast] = useState(null);
+  const [commentInputs, setCommentInputs] = useState({});
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [feedbacksVisible, setFeedbacksVisible] = useState(false);
+  const [expandedShipments, setExpandedShipments] = useState({});
+  const [activeTab, setActiveTab] = useState("shipments"); // shipments, create, feedbacks
 
   const shipmentTypes = ["Truckload", "Less than Truckload"];
   const shipmentModes = ["Land Shipping", "Air Shipping", "Sea Shipping"];
@@ -28,6 +38,7 @@ const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
   useEffect(() => {
     loadShipments();
+    loadFeedbacks();
   }, []);
 
   const loadShipments = async () => {
@@ -47,6 +58,18 @@ const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
     }
   };
 
+  const loadFeedbacks = async () => {
+    try {
+      const res = await fetch("/api/feedbacks");
+      const data = await res.json();
+      if (data.success) setFeedbacks(data.data || []);
+      else setFeedbacks([]);
+    } catch (err) {
+      console.error(err);
+      setFeedbacks([]);
+    }
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
     router.replace("/admin");
@@ -54,61 +77,35 @@ const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
   const showToast = (message) => {
     setToast(message);
-    setTimeout(() => setToast(null), 4000); // disappear after 4s
+    setTimeout(() => setToast(null), 4000);
   };
-  useEffect(() => {
-    loadFeedbacks();
-  }, []);
 
-  const loadFeedbacks = async () => {
-    setLoadingFeedbacks(true);
+  const updateShipmentField = async (code, field, value) => {
     try {
-      const res = await fetch("/api/feedbacks");
-      const data = await res.json();
-      if (data.success) {
-        setFeedbacks(data.data || []); // fallback to empty array
+      const payload = { [field]: value };
+      const endpoint = field === "admin_comment" ? `/api/tracking/${code}` : `/api/shipments/${code}`;
+
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.error || "Update failed");
+
+      if (field === "admin_comment") {
+        showToast(`Admin comment for ${code} updated and email sent!`);
       } else {
-        setFeedbacks([]);
-        console.error("Error fetching feedbacks:", data.error);
+        showToast(`Shipment ${code} updated successfully!`);
       }
+
+      loadShipments();
     } catch (err) {
-      console.error(err);
-      setFeedbacks([]);
-    } finally {
-      setLoadingFeedbacks(false);
+      console.error("Failed to update shipment:", err);
+      showToast("Failed to update shipment");
     }
   };
-
-
- const updateShipmentField = async (code, field, value) => {
-  try {
-    const payload = { [field]: value };
-
-    // ✅ Send PATCH request to the correct endpoint for admin comments
-    const endpoint = field === "admin_comment" ? `/api/tracking/${code}` : `/api/shipments/${code}`;
-
-    const res = await fetch(endpoint, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const updated = await res.json();
-
-    if (!res.ok) throw new Error(updated.error || "Update failed");
-
-    // Show toast if admin_comment was updated
-    if (field === "admin_comment") {
-      showToast(`Admin comment for ${code} updated and email sent!`);
-    }
-
-    // Refresh shipments after update
-    loadShipments();
-  } catch (err) {
-    console.error("Failed to update shipment:", err);
-  }
-};
-
 
   const handleProductChange = async (shipmentCode, index, field, value) => {
     const shipment = shipments.find((s) => s.code === shipmentCode);
@@ -135,314 +132,452 @@ const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
     await updateShipmentField(shipmentCode, "products", updatedProducts);
   };
 
+  const toggleShipmentExpanded = (code) => {
+    setExpandedShipments(prev => ({ ...prev, [code]: !prev[code] }));
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      "On Hold": "bg-yellow-100 text-yellow-800 border-yellow-200",
+      "In Transit": "bg-blue-100 text-blue-800 border-blue-200",
+      "Delivered": "bg-green-100 text-green-800 border-green-200",
+      "Cancelled": "bg-red-100 text-red-800 border-red-200",
+    };
+    return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
+  };
+
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50 p-8 relative">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Toast */}
         {toast && (
-          <div className="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
-            {toast}
+          <div className="fixed top-5 right-5 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg shadow-2xl z-50 animate-slide-in">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              {toast}
+            </div>
           </div>
         )}
 
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              Logout
-            </button>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white shadow-xl">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <Package className="w-8 h-8" />
+                </div>
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-extrabold">Admin Dashboard</h1>
+                  <p className="text-purple-100 text-sm">Manage shipments and track operations</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg transition duration-200"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mt-6 border-b border-white/20">
+              <button
+                onClick={() => setActiveTab("shipments")}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg transition duration-200 ${
+                  activeTab === "shipments"
+                    ? "bg-white text-purple-600 font-semibold"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                Shipments ({shipments.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("create")}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg transition duration-200 ${
+                  activeTab === "create"
+                    ? "bg-white text-purple-600 font-semibold"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+                Create New
+              </button>
+              <button
+                onClick={() => setActiveTab("feedbacks")}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg transition duration-200 ${
+                  activeTab === "feedbacks"
+                    ? "bg-white text-purple-600 font-semibold"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Feedbacks ({feedbacks.length})
+              </button>
+            </div>
           </div>
-<div className="mb-6">
-  <button
-    onClick={() => {
-      setFeedbacksVisible(!feedbacksVisible);
-      if (!feedbacksVisible) loadFeedbacks(); // load only when opening
-    }}
-    className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-  >
-    {feedbacksVisible ? "Hide Feedbacks" : "View All Feedbacks"}
-  </button>
-</div>
+        </div>
 
-{feedbacksVisible && (
-  <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
-    <h2 className="text-2xl font-bold mb-4">Feedbacks</h2>
-    {feedbacks.length === 0 ? (
-      <p className="text-gray-500">No feedbacks yet.</p>
-    ) : (
-      <div className="space-y-4">
-        {feedbacks.map((f) => (
-          <div key={f.id} className="border p-4 rounded-lg">
-            <p className="font-semibold">{f.name} ({f.email})</p>
-            <p className="text-gray-700 mt-1">{f.message}</p>
-            <p className="text-gray-400 text-sm mt-1">
-              {new Date(f.created_at).toLocaleString()}
-            </p>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+          
+          {/* Create Shipment Tab */}
+          {activeTab === "create" && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 animate-fade-in">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-purple-100 p-2 rounded-lg">
+                  <Plus className="w-6 h-6 text-purple-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Create New Shipment</h2>
+              </div>
+              <AdminForm onSuccess={() => {
+                loadShipments();
+                setActiveTab("shipments");
+                showToast("Shipment created successfully!");
+              }} />
+            </div>
+          )}
 
-          {/* Create Shipment Form */}
-          <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
-            <h2 className="text-2xl font-bold mb-4">Create Shipment</h2>
-            <AdminForm onSuccess={loadShipments} />
-          </div>
+          {/* Feedbacks Tab */}
+          {activeTab === "feedbacks" && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 animate-fade-in">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <MessageSquare className="w-6 h-6 text-orange-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Customer Feedbacks</h2>
+              </div>
+              {feedbacks.length === 0 ? (
+                <div className="text-center py-12">
+                  <Mail className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">No feedbacks yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {feedbacks.map((f) => (
+                    <div key={f.id} className="border border-gray-200 p-6 rounded-xl hover:shadow-lg transition duration-200 bg-gradient-to-r from-white to-gray-50">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-bold text-gray-900 text-lg">{f.name}</p>
+                          <p className="text-purple-600 text-sm">{f.email}</p>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(f.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed">{f.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Active Shipments */}
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold mb-4">Active Shipments</h2>
-            {loading ? (
-              <p>Loading shipments...</p>
-            ) : shipments.length === 0 ? (
-              <p className="text-gray-500">No shipments yet.</p>
-            ) : (
-              <div className="space-y-6">
-                {shipments.map((shipment) => (
-                  <div key={shipment.code} className="border p-4 rounded-lg space-y-3">
-                    <p className="font-bold text-lg">{shipment.name}</p>
-                    <p className="text-sm text-gray-600">Code: {shipment.code}</p>
-                    <p className="text-sm text-gray-600">Agency: {shipment.agency}</p>
-
-                    {/* Editable dropdowns */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <label>
-                        Type of Shipment:
-                        <select
-                          className="input mt-1"
-                          value={shipment.shipment_type || "Truckload"}
-                          onChange={(e) =>
-                            updateShipmentField(shipment.code, "shipment_type", e.target.value)
-                          }
+          {/* Shipments Tab */}
+          {activeTab === "shipments" && (
+            <div className="space-y-4 animate-fade-in">
+              {loading ? (
+                <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+                  <p className="text-gray-600 mt-4">Loading shipments...</p>
+                </div>
+              ) : shipments.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">No shipments yet</p>
+                  <button
+                    onClick={() => setActiveTab("create")}
+                    className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+                  >
+                    Create First Shipment
+                  </button>
+                </div>
+              ) : (
+                shipments.map((shipment) => (
+                  <div
+                    key={shipment.code}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition duration-300"
+                  >
+                    {/* Shipment Header */}
+                    <div className="bg-gradient-to-r from-purple-50 to-orange-50 p-6 border-b border-gray-200">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-900">{shipment.name}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(shipment.status)}`}>
+                              {shipment.status}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Package className="w-4 h-4" />
+                              Code: <strong>{shipment.code}</strong>
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Truck className="w-4 h-4" />
+                              {shipment.agency}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleShipmentExpanded(shipment.code)}
+                          className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition text-purple-600 font-medium"
                         >
-                          {shipmentTypes.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                          <Edit3 className="w-4 h-4" />
+                          {expandedShipments[shipment.code] ? "Hide Details" : "Edit Details"}
+                          {expandedShipments[shipment.code] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
 
-                      <label>
-                        Shipment Mode:
-                        <select
-                          className="input mt-1"
-                          value={shipment.shipment_mode || "Land Shipping"}
-                          onChange={(e) =>
-                            updateShipmentField(shipment.code, "shipment_mode", e.target.value)
-                          }
-                        >
-                          {shipmentModes.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {mode}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                    {/* Expanded Details */}
+                    {expandedShipments[shipment.code] && (
+                      <div className="p-6 space-y-6">
+                        {/* Quick Info Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-purple-50 p-4 rounded-xl">
+                            <p className="text-xs text-purple-600 font-semibold mb-1">Shipment Type</p>
+                            <select
+                              className="w-full bg-white border-0 rounded-lg px-3 py-2 text-gray-900 font-medium focus:ring-2 focus:ring-purple-500"
+                              value={shipment.shipment_type || "Truckload"}
+                              onChange={(e) => updateShipmentField(shipment.code, "shipment_type", e.target.value)}
+                            >
+                              {shipmentTypes.map((type) => (
+                                <option key={type} value={type}>{type}</option>
+                              ))}
+                            </select>
+                          </div>
 
-                      <label>
-                        Payment Mode:
-                        <select
-                          className="input mt-1"
-                          value={shipment.payment_mode || "CASH"}
-                          onChange={(e) =>
-                            updateShipmentField(shipment.code, "payment_mode", e.target.value)
-                          }
-                        >
-                          {paymentModes.map((mode) => (
-                            <option key={mode} value={mode}>
-                              {mode}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                          <div className="bg-orange-50 p-4 rounded-xl">
+                            <p className="text-xs text-orange-600 font-semibold mb-1">Shipment Mode</p>
+                            <select
+                              className="w-full bg-white border-0 rounded-lg px-3 py-2 text-gray-900 font-medium focus:ring-2 focus:ring-orange-500"
+                              value={shipment.shipment_mode || "Land Shipping"}
+                              onChange={(e) => updateShipmentField(shipment.code, "shipment_mode", e.target.value)}
+                            >
+                              {shipmentModes.map((mode) => (
+                                <option key={mode} value={mode}>{mode}</option>
+                              ))}
+                            </select>
+                          </div>
 
-                      <label>
-                        Status:
-                        <select
-                          className="input mt-1"
-                          value={shipment.status || "On Hold"}
-                          onChange={(e) =>
-                            updateShipmentField(shipment.code, "status", e.target.value)
-                          }
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                          <div className="bg-blue-50 p-4 rounded-xl">
+                            <p className="text-xs text-blue-600 font-semibold mb-1">Payment Mode</p>
+                            <select
+                              className="w-full bg-white border-0 rounded-lg px-3 py-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500"
+                              value={shipment.payment_mode || "CASH"}
+                              onChange={(e) => updateShipmentField(shipment.code, "payment_mode", e.target.value)}
+                            >
+                              {paymentModes.map((mode) => (
+                                <option key={mode} value={mode}>{mode}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
 
-                      <label>
-                        Carrier Reference No:
-                        <input
-                          className="input mt-1"
-                          value={shipment.carrier_ref || ""}
-                          placeholder="LOG..."
-                          onChange={(e) =>
-                            updateShipmentField(shipment.code, "carrier_ref", e.target.value)
-                          }
-                        />
-                      </label>
+                        {/* Status and Carrier */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                            <select
+                              className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              value={shipment.status || "On Hold"}
+                              onChange={(e) => updateShipmentField(shipment.code, "status", e.target.value)}
+                            >
+                              {statusOptions.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
 
-                     {/* Admin Comment */}
-<label>
-  Admin Comment:
-  <textarea
-    className="input mt-1 w-full"
-    placeholder="Enter admin note..."
-    value={commentInputs[shipment.code] ?? shipment.admin_comment ?? ""}
-    onChange={(e) =>
-      setCommentInputs({
-        ...commentInputs,
-        [shipment.code]: e.target.value,
-      })
-    }
-  />
-</label>
-<button
-  className="bg-green-500 text-white px-3 py-1 rounded mt-1"
-  onClick={() => {
-    const comment = commentInputs[shipment.code]?.trim();
-    if (!comment) return;
-    updateShipmentField(shipment.code, "admin_comment", comment);
-  }}
->
-  Save Comment
-</button>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Carrier Reference</label>
+                            <input
+                              className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              value={shipment.carrier_ref || ""}
+                              onChange={(e) => updateShipmentField(shipment.code, "carrier_ref", e.target.value)}
+                            />
+                          </div>
+                        </div>
 
-</div>
-
-                    {/* Products Table */}
-                    <div className="mt-2 border-t pt-2 space-y-2">
-                      <h4 className="font-semibold">Products</h4>
-                      {(shipment.products || []).map((p, idx) => (
-                        <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-                          <input
-                            className="input"
-                            placeholder="Piece Type"
-                            value={p.piece_type || ""}
+                        {/* Admin Comment */}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Comment (Sent to Customer)</label>
+                          <textarea
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Enter admin note..."
+                            rows="3"
+                            value={commentInputs[shipment.code] ?? shipment.admin_comment ?? ""}
                             onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "piece_type", e.target.value)
-                            }
-                          />
-                          <input
-                            className="input"
-                            placeholder="Description"
-                            value={p.description || ""}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "description", e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="Qty"
-                            value={p.qty || 1}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "qty", e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="Length (cm)"
-                            value={p.length_cm || 0}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "length_cm", e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="Width (cm)"
-                            value={p.width_cm || 0}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "width_cm", e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="Height (cm)"
-                            value={p.height_cm || 0}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "height_cm", e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="Weight (kg)"
-                            value={p.weight_kg || 0}
-                            onChange={(e) =>
-                              handleProductChange(shipment.code, idx, "weight_kg", e.target.value)
+                              setCommentInputs({
+                                ...commentInputs,
+                                [shipment.code]: e.target.value,
+                              })
                             }
                           />
                           <button
-                            className="text-red-600"
-                            onClick={() => removeProduct(shipment.code, idx)}
+                            className="mt-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition duration-200"
+                            onClick={() => {
+                              const comment = commentInputs[shipment.code]?.trim();
+                              if (!comment) return;
+                              updateShipmentField(shipment.code, "admin_comment", comment);
+                            }}
                           >
-                            Remove
+                            Save & Send Email
                           </button>
                         </div>
-                      ))}
-                      <button
-                        onClick={() => addProduct(shipment.code)}
-                        className="text-blue-600 font-medium mt-2"
-                      >
-                        + Add Product
-                      </button>
-                    </div>
 
-                    {/* Current Location */}
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        type="number"
-                        step="0.000001"
-                        id={`lat-${shipment.code}`}
-                        className="border rounded px-3 py-2 flex-1"
-                        placeholder="Lat"
-                      />
-                      <input
-                        type="number"
-                        step="0.000001"
-                        id={`lng-${shipment.code}`}
-                        className="border rounded px-3 py-2 flex-1"
-                        placeholder="Lng"
-                      />
-                      <button
-                        onClick={() => {
-                          const lat = parseFloat(document.getElementById(`lat-${shipment.code}`).value);
-                          const lng = parseFloat(document.getElementById(`lng-${shipment.code}`).value);
-                          if (!isNaN(lat) && !isNaN(lng)) {
-                            updateShipmentField(shipment.code, "current_lat", lat);
-                            updateShipmentField(shipment.code, "current_lng", lng);
-                          } else {
-                            alert("Enter valid coordinates");
-                          }
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                      >
-                        Update Location
-                      </button>
-                    </div>
+                        {/* Products Section */}
+                        <div className="border-t pt-6">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-bold text-gray-900">Products</h4>
+                            <button
+                              onClick={() => addProduct(shipment.code)}
+                              className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Product
+                            </button>
+                          </div>
+                          <div className="space-y-3">
+                            {(shipment.products || []).map((p, idx) => (
+                              <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                  <input
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                                    placeholder="Piece Type"
+                                    value={p.piece_type || ""}
+                                    onChange={(e) =>
+                                      handleProductChange(shipment.code, idx, "piece_type", e.target.value)
+                                    }
+                                  />
+                                  <input
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                                    placeholder="Description"
+                                    value={p.description || ""}
+                                    onChange={(e) =>
+                                      handleProductChange(shipment.code, idx, "description", e.target.value)
+                                    }
+                                  />
+                                  <input
+                                    type="number"
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                                    placeholder="Qty"
+                                    value={p.qty || 1}
+                                    onChange={(e) =>
+                                      handleProductChange(shipment.code, idx, "qty", e.target.value)
+                                    }
+                                  />
+                                  <input
+                                    type="number"
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                                    placeholder="Weight (kg)"
+                                    value={p.weight_kg || 0}
+                                    onChange={(e) =>
+                                      handleProductChange(shipment.code, idx, "weight_kg", e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <div className="text-xs text-gray-500">
+                                    Dimensions: {p.length_cm || 0} × {p.width_cm || 0} × {p.height_cm || 0} cm
+                                  </div>
+                                  <button
+                                    className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                    onClick={() => removeProduct(shipment.code, idx)}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Location Update */}
+                        <div className="border-t pt-6">
+                          <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-purple-600" />
+                            Update Current Location
+                          </h4>
+                          <div className="flex gap-3">
+                            <input
+                              type="number"
+                              step="0.000001"
+                              id={`lat-${shipment.code}`}
+                              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 bg-white"
+                              placeholder="Latitude"
+                            />
+                            <input
+                              type="number"
+                              step="0.000001"
+                              id={`lng-${shipment.code}`}
+                              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 bg-white"
+                              placeholder="Longitude"
+                            />
+                            <button
+                              onClick={() => {
+                                const lat = parseFloat(document.getElementById(`lat-${shipment.code}`).value);
+                                const lng = parseFloat(document.getElementById(`lng-${shipment.code}`).value);
+                                if (!isNaN(lat) && !isNaN(lng)) {
+                                  updateShipmentField(shipment.code, "current_lat", lat);
+                                  updateShipmentField(shipment.code, "current_lng", lng);
+                                } else {
+                                  alert("Enter valid coordinates");
+                                }
+                              }}
+                              className="bg-gradient-to-r from-purple-600 to-orange-500 text-white px-6 py-2 rounded-lg hover:shadow-lg transition"
+                            >
+                              Update
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Chat Widget */}
+        <ChatWidget isAdmin={true} />
       </div>
-      
-<ChatWidget isAdmin={true} />
+
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.4s ease-out;
+        }
+      `}</style>
     </AuthGuard>
   );
 }
