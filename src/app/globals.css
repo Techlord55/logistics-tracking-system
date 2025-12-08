@@ -30,3 +30,7 @@ body {
   @apply border rounded-lg px-4 py-2 w-full bg-gray-50 focus:ring-2 focus:ring-blue-500;
 }
 
+input,
+textarea {
+  color-scheme: light dark; /* tells OS we handle both themes */
+}

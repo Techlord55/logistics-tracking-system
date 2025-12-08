@@ -442,12 +442,15 @@ export default function ChatWidget({ isAdmin = false, selectedUserId = null }) {
               {!isAdmin && messages.filter(m => !m.is_admin).length === 0 && (
                 <div className="p-4 bg-yellow-50 border-b border-yellow-200">
                   <input
-                    type="text"
-                    placeholder="Enter your name to start chatting..."
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                    className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
+  type="text"
+  placeholder="Enter your name to start chatting..."
+  value={senderName}
+  onChange={(e) => setSenderName(e.target.value)}
+  className="w-full px-3 py-2 border border-gray-400 rounded-lg text-sm
+                           bg-white text-gray-900 placeholder:text-gray-500
+                           focus:ring-2 focus:ring-green-500 focus:border-green-500
+                           dark:bg-white dark:text-gray-900"
+/>
                 </div>
               )}
 
@@ -608,8 +611,11 @@ export default function ChatWidget({ isAdmin = false, selectedUserId = null }) {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
+                     className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg
+                             text-gray-900 text-sm placeholder:text-gray-500
+                             focus:ring-2 focus:ring-green-500 focus:border-green-500
+                             dark:bg-white dark:text-gray-900 dark:border-gray-500"
+             />
 
                   {/* Sticker button */}
                   <button
