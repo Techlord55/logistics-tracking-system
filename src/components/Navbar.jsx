@@ -91,6 +91,7 @@ export default function Navbar({ showFullNav = true }) {
         {showFullNav ? (
           <>
             <nav className="hidden md:flex items-center space-x-8 text-base">
+              <NavLink href="/">Home</NavLink>
               <DropdownMenu title="Services" items={servicesItems} />
               <NavLink href="/track">Tracking</NavLink>
               <NavLink href="/support">Support</NavLink>

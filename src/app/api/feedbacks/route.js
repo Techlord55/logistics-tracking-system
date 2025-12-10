@@ -59,7 +59,7 @@ export async function POST(req) {
 
     await transporter.sendMail({
       from: email,
-      to: "support@shiptrackglobal.com",
+      to: "shiptrackglobal@gmail.com",
       subject: `Feedback from ${name}`,
       text: feedback,
       html: `<p>${feedback}</p><p>From: ${name} (${email})</p>`,

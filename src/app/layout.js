@@ -1,5 +1,5 @@
 import './globals.css'
-
+import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'Shipment Tracking System',
@@ -19,7 +19,7 @@ export default function RootLayout({ children }) {
       {/* 🔑 Fix for Hydration Mismatch Error caused by browser extensions */}
       <body suppressHydrationWarning={true}>
         {children}
-        
+        <Footer />
       </body>
     </html>
   )

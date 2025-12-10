@@ -67,7 +67,7 @@ export default function ReviewsCarousel() {
               className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover"
             />
             <div className="text-center md:text-left">
-              <h3 className="text-lg md:text-xl font-semibold">{review.name}</h3>
+              <h3 className="text-lg md:text-xl text-gray-800 font-semibold">{review.name}</h3>
               <p className="text-gray-500 text-sm md:text-base">{review.role}</p>
               <p className="text-gray-700 text-sm md:text-lg mt-2 md:mt-4">"{review.text}"</p>
             </div>

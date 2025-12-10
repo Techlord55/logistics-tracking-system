@@ -1,5 +1,8 @@
 "use client";
 import { useState } from "react";
+  import ChatWidget from "@/components/ChatWidget";
+
+
 
 export default function FeedbackPage() {
   const [form, setForm] = useState({ name: "", email: "", feedback: "" });
@@ -35,6 +38,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="max-w-xl mx-auto py-10 px-5">
+      
       <h1 className="text-3xl font-bold mb-6 text-purple-700">
         Send Us Feedback 💬
       </h1>
@@ -82,6 +86,7 @@ export default function FeedbackPage() {
           {loading ? "Sending..." : "Send Feedback"}
         </button>
       </form>
+      <ChatWidget />
     </div>
   );
 }

@@ -94,7 +94,8 @@ export default function PrivacyPolicy() {
             <p className="text-gray-900">
               <strong>Email:</strong>{" "}
               <a href="mailto:support@shiptrackglobal.com" className="text-purple-600 hover:underline">
-                support@shiptrackglobal.com
+               shiptrackglobal@gmail.com
+
               </a>
             </p>
           </div>

@@ -244,7 +244,8 @@ export default function TermsOfService() {
                   href="mailto:legal@shiptrackglobal.com"
                   className="text-purple-600 hover:underline"
                 >
-                  legal@shiptrackglobal.com
+                 shiptrackglobal@gmail.com
+
                 </a>
               </p>
               <p className="text-gray-900">
@@ -253,7 +254,8 @@ export default function TermsOfService() {
                   href="mailto:support@shiptrackglobal.com"
                   className="text-purple-600 hover:underline"
                 >
-                  support@shiptrackglobal.com
+                 shiptrackglobal@gmail.com
+
                 </a>
               </p>
               <p className="text-gray-900">
